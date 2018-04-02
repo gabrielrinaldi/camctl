@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
-import usb.core
-import usb.util
+import hid
+from time import sleep
 import argparse
-import sys
 
 class CAM:
 	def __init__(self, vid, pid):
@@ -12,27 +11,37 @@ class CAM:
 		self._find()
 
 	def _find(self):
-		devices = list(usb.core.find(idVendor=vid, idProduct=pid, find_all=True))
-		self.device = devices[0]
+		self.device = hid.device(self.vendor, self.product)
 
 	def claim(self):
-		if self.device.is_kernel_driver_active(0):
-			print('Detaching kernel driver..')
-			self.device.detach_kernel_driver(0)
+		print('Detaching kernel driver..')
+		self.device.open(self.vendor, self.product)
 
 	def declaim(self):
-		if not self.device.is_kernel_driver_active(0):
-			print('Reattaching kernel driver..')
-			usb.util.dispose_resources(self.device)
-			self.device.attach_kernel_driver(0)
+		print('Reattaching kernel driver..')
+		self.device.close()
 
 	def fan(self, speed):
 		print('Setting fan speed to {}..'.format(speed))
-		self.device.write(1, [2, 77, 0, 0, speed, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+		self.device.write([2, 77, 0, 0, speed, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
 	def pump(self, speed):
 		print('Setting pump speed to {}..'.format(speed))
-		self.device.write(1, [2, 77, 64, 0, speed, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+		self.device.write([2, 77, 64, 0, speed, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+	def status(self):
+		raw_status = self.device.read(0x81, 64)
+
+		if len(raw_status) >= 7:
+			temperature = raw_status[1] + raw_status[2] / 10
+			fan = raw_status[3] << 8 | raw_status[4]
+			pump = raw_status[5] << 8 | raw_status[6]
+
+			print('Temperature: {}ºC'.format(temperature))
+			print('Fan: {} RPM'.format(fan))
+			print('Pump: {} RPM'.format(pump))
+		else:
+			self.status()
 
 # Change these if they differ from yours
 # See lsusb (e.g. Bus 001 Device 004: ID 1e71:170e NZXT)
@@ -45,20 +54,23 @@ parser.add_argument('-p', '--pumpspeed', dest='pumpspeed', type=int, default=Non
 args = parser.parse_args()
 
 if args.fanspeed:
-	if args.fanspeed < 10 or args.fanspeed > 100:
+	if args.fanspeed < 25 or args.fanspeed > 100:
 		print('Fan speed must be between 10 - 100')
 		sys.exit(0)
 if args.pumpspeed:
-	if args.pumpspeed < 10 or args.pumpspeed > 100:
-		print('Pump speed must be between 10 - 100')
+	if args.pumpspeed < 60 or args.pumpspeed > 100:
+		print('Pump speed must be between 60 - 100')
 		sys.exit(0)
 try:
 	cam = CAM(vid, pid)
 	cam.claim()
+
 	if args.fanspeed:
 		cam.fan(args.fanspeed)
 	if args.pumpspeed:
 		cam.pump(args.pumpspeed)
+
+	cam.status()
 	cam.declaim()
 except Exception as e:
 	cam.declaim()

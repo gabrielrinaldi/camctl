@@ -13,11 +13,11 @@ With that said however, this is basic stuff - nothing crazy has happened in my t
 If you have an earlier version of the NZXT Kraken than those listed here, I recommend looking at https://github.com/jaksi/leviathan
 
 ## Tested on
-Fedora 25 x64 Kernel 4.10.10-200.fc25.x86_64
+macOS 10.13.4
 
 ## Dependencies
 * Python 3
-* pyusb ```sudo python3 -m pip install pyusb```
+* hidapi ```sudo python3 -m pip install hidapi```
 
 ## Installation
 ```Shell
