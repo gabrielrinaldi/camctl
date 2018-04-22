@@ -1,5 +1,5 @@
 # camctl
-Fan/pump speed control on Linux for NZXT Kraken X62 (possibly other editions)
+Fan/pump speed control on Mac for NZXT Kraken X62
 
 # DISCLAIMER
 Use at your **own risk**, I take **NO** responsibility if anything crazy happens. Neither does NZXT as they are not involved.
@@ -9,8 +9,6 @@ With that said however, this is basic stuff - nothing crazy has happened in my t
 ## Supported devices
 
 * NZXT Kraken X62
-
-If you have an earlier version of the NZXT Kraken than those listed here, I recommend looking at https://github.com/jaksi/leviathan
 
 ## Tested on
 macOS 10.13.4
